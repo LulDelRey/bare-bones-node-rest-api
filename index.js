@@ -3,7 +3,7 @@ const https = require('https');
 const stringDecoder = require('string_decoder').StringDecoder;
 const fs = require('fs');
 
-const config = require('./config');
+const config = require('./https/config');
 const controller = require('./controllers');
 
 // Instantiating http server
