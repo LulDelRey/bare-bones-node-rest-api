@@ -1,13 +1,32 @@
 const http = require('http');
+const https = require('https');
 const stringDecoder = require('string_decoder').StringDecoder;
-const controller = require('./controllers')
+const fs = require('fs');
 
-const router = {
-  'sample': controller.sample,
-  'notFound': controller.notFound,
+const config = require('./config');
+const controller = require('./controllers');
+
+// Instantiating http server
+const httpServer = http.createServer((req, res) => requestHandler(req, res));
+
+// Instantiating https server
+const httpsServerOptions = {
+  key : fs.readFileSync('./https/key.pem'),
+  cert: fs.readFileSync('./https/cert.pem'),
 };
 
-const server = http.createServer((req, res) => {
+const httpsServer = https.createServer(httpsServerOptions, (req, res) => requestHandler(req, res));
+
+httpServer.listen(config.httpPort, () => {
+  console.log(`${config.envName} on ${config.httpPort}`);
+});
+
+httpsServer.listen(config.httpsPort, () => {
+  console.log(`${config.envName} on ${config.httpsPort}`);
+});
+
+// Logic of handling requests
+const requestHandler = (req, res) => {
   // Base constants
   const baseURL = 'http://' + req.headers.host + '/';
   const parsedUrl = new URL(req.url, baseURL);
@@ -29,17 +48,17 @@ const server = http.createServer((req, res) => {
   req.on('end', () => {
     buffer += decoder.end();
     const data = {
-      'path': path,
-      'queryStringObject': queryStringObject,
-      'method': method,
-      'headers': headers,
+      path,
+      queryStringObject,
+      method,
+      headers,
     };
 
     // Check if a body exists and try to parse it
     if (buffer) {
       try {
         const body = JSON.parse(buffer);
-        data['body'] = body;
+        data.body = body;
       } catch (e) {
         // Change this to a error handler function
         console.log(e);
@@ -53,9 +72,9 @@ const server = http.createServer((req, res) => {
     }
 
     // Select the controller based on the path
-    const usedController = typeof (router[path]) !== 'undefined'
-      ? router[path]
-      : router['notFound'];
+    const usedController = typeof (controller[path]) !== 'undefined'
+      ? controller[path]
+      : controller.notFound;
 
     // Calls the controller passing the data object created and a function to return the response
     usedController(data, (status, payload) => {
@@ -71,6 +90,4 @@ const server = http.createServer((req, res) => {
       return res.end(jsonResp + '\n');
     });
   });
-});
-
-server.listen(3000, () => console.log('Server is listening on 3000...'));
+};

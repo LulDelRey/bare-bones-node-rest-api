@@ -1,5 +1,5 @@
-const sample = (data, callBack) => {
-  callBack(200, { ok: true, message: 'Sample handler!', payload: data });
+const ping = (_, callBack) => {
+  callBack(200, { ok: true, message: 'Pong' });
 };
 
 const notFound = (data, callBack) => {
@@ -7,6 +7,6 @@ const notFound = (data, callBack) => {
 };
 
 module.exports = {
-  sample,
+  ping,
   notFound,
 };
